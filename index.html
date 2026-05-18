@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
+<meta name="theme-color" content="#0f1720" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="GM Command" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="format-detection" content="telephone=no" />
+<title>GM Daily Command Center - Cleveland LeafFilter + Lighting</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230f1720'/><text x='90' y='118' font-family='-apple-system,Segoe UI,Roboto,sans-serif' font-size='90' font-weight='800' text-anchor='middle' fill='white'>GM</text></svg>" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230f1720'/><text x='32' y='44' font-family='sans-serif' font-size='30' font-weight='800' text-anchor='middle' fill='white'>GM</text></svg>" />
+<style>
+  :root {
+    color-scheme: light;
+    --bg:#f6f7f9; --card:#fff; --ink:#0f1720; --ink2:#475569;
+    --line:#e3e7ee; --accent:#16a34a; --bad:#dc2626;
+    --filter:#16a34a; --filter-bg:#dcfce7;
+    --light:#f59e0b;  --light-bg:#fef3c7;
+    --shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 14px rgba(15,23,42,.04);
+    --radius:14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: rgba(15,23,42,.08); }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overscroll-behavior-y: contain; cursor: default; touch-action: manipulation;
+  }
+  input, textarea, select, button { font: inherit; font-size: 16px; }
+  a { color: inherit; }
+  button { cursor: pointer; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: calc(8px + var(--safe-top)) 12px calc(80px + var(--safe-bot)); }
+
+  .js-status {
+    position: fixed; top: calc(8px + var(--safe-top)); right: 8px; z-index: 100;
+    background: #dc2626; color:#fff; font-size: 11px; font-weight: 800;
+    padding: 4px 10px; border-radius: 999px; box-shadow: var(--shadow);
+    transition: background .2s ease;
+  }
+  .js-status.ok { background: #16a34a; }
+
+  header.top {
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    background: linear-gradient(135deg,#0f1720 0%,#1e293b 100%); color:#f8fafc;
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+    position: sticky; top: 0; z-index: 20;
+  }
+  header.top h1 { margin:0; font-size: 17px; line-height:1.15; }
+  header.top .sub { color:#cbd5e1; font-size:11.5px; margin-top:2px; }
+  .clock { text-align:right; font-variant-numeric: tabular-nums; flex-shrink:0; }
+  .clock .time { font-size:22px; font-weight:700; line-height:1; }
+  .clock .date { color:#cbd5e1; font-size:11px; margin-top:3px; }
+  .top-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .top-actions button { background: rgba(255,255,255,.12); border:0; color:#f8fafc; padding:8px 12px;
+    border-radius:10px; font-weight:600; font-size:12.5px; min-height:36px; }
+  .top-actions button:active { background: rgba(255,255,255,.28); }
+
+  /* Vertical switcher - bold, dark, impossible to miss */
+  .vsw {
+    display:flex; gap:8px; background: linear-gradient(135deg,#1e293b,#334155);
+    padding:10px; border-radius:var(--radius);
+    box-shadow:var(--shadow); margin: 14px 0 10px; border: 2px solid #0f1720;
+  }
+  .vsw button {
+    flex:1; border:0; background:rgba(255,255,255,.12); padding:14px 10px; border-radius:10px;
+    font-weight:800; font-size:15px; color:#f8fafc; min-height:56px;
+  }
+  .vsw button.active { color:#fff; box-shadow: 0 0 0 2px #fff inset; }
+  .vsw button.active[data-v="both"]   { background:#0f1720; }
+  .vsw button.active[data-v="filter"] { background: var(--filter); }
+  .vsw button.active[data-v="light"]  { background: var(--light); }
+  .vsw button .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .vsw button[data-v="filter"] .dot { background: var(--filter); }
+  .vsw button[data-v="light"]  .dot { background: var(--light); }
+  .vsw button[data-v="both"]   .dot { background:#0f1720; }
+  .vsw button.active .dot { background:#fff !important; }
+
+  nav.tabs {
+    display: flex; gap: 6px; background:#0f1720; padding: 8px;
+    border-radius: var(--radius); box-shadow: var(--shadow); margin: 8px 0 14px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    position: sticky; top: 78px; z-index: 15;
+  }
+  nav.tabs::-webkit-scrollbar { display:none; }
+  nav.tabs button {
+    flex: 0 0 auto; min-width: 110px; border:0; background: rgba(255,255,255,.08);
+    padding: 10px 14px; border-radius: 10px; font-weight: 700;
+    color: #cbd5e1; font-size: 13px; white-space: nowrap; min-height: 42px;
+  }
+  nav.tabs button:active { background:rgba(255,255,255,.18); color: #fff; }
+  nav.tabs button.active { background:#16a34a; color:#fff; }
+
+  .grid { display:grid; gap:12px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .card { background:#fff; border:1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 14px; box-shadow: var(--shadow); }
+  .card.filter { border-top:4px solid var(--filter); }
+  .card.light  { border-top:4px solid var(--light); }
+  .card h2 { margin: 0 0 10px; font-size: 15px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card h3 { margin: 12px 0 6px; font-size: 13.5px; }
+  .muted { color: var(--ink2); font-size: 13px; }
+  .tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:#eef2f7; color:#334155; font-weight:700; }
+  .tag.green { background:#dcfce7; color:#166534; }
+  .tag.blue  { background:#e0f2fe; color:#075985; }
+  .tag.amber { background:#fef3c7; color:#92400e; }
+  .tag.red   { background:#fee2e2; color:#991b1b; }
+  .tag.filter{ background: var(--filter-bg); color:#166534; }
+  .tag.light { background: var(--light-bg);  color:#92400e; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .spacer { flex:1; }
+  hr.sep { border:0; border-top:1px solid var(--line); margin: 12px 0; }
+
+  .ooda { display:grid; gap:10px; grid-template-columns: 1fr; }
+  .quad { border-radius: var(--radius); padding: 13px 14px; color:#fff; min-height: 150px;
+    display:flex; flex-direction:column; box-shadow: var(--shadow); position:relative; }
+  .quad .badge { position:absolute; top:10px; right:12px; font-size:10.5px;
+    background: rgba(255,255,255,.22); padding: 3px 8px; border-radius: 999px; font-weight:700; }
+  .quad h3 { margin:0; font-size:17px; }
+  .quad p.q { font-size:13px; opacity:.95; margin: 6px 0 8px; }
+  .quad ul { margin:0; padding-left: 18px; }
+  .quad ul li { margin:3px 0; font-size: 13px; }
+  .quad.observe { background: linear-gradient(135deg,#0ea5e9,#0284c7); }
+  .quad.orient  { background: linear-gradient(135deg,#6366f1,#4f46e5); }
+  .quad.decide  { background: linear-gradient(135deg,#f59e0b,#d97706); }
+  .quad.act     { background: linear-gradient(135deg,#16a34a,#15803d); }
+
+  .checklist { list-style:none; margin:0; padding:0; }
+  .checklist li {
+    display:flex; align-items:flex-start; gap:12px;
+    padding: 12px 6px; border-bottom:1px dashed #eef2f7; min-height:44px;
+  }
+  .checklist li:last-child { border-bottom:0; }
+  .checklist input[type=checkbox] {
+    width: 24px; height: 24px; margin-top: 1px; accent-color: var(--accent); flex-shrink:0;
+  }
+  .checklist .label { flex:1; font-size: 14.5px; line-height: 1.4; }
+  .checklist .when { font-size:10.5px; color:#475569; padding:3px 7px; border-radius:6px;
+    background:#f1f5f9; white-space:nowrap; font-weight:700; flex-shrink:0; align-self:center; }
+  .checklist li.done .label { text-decoration: line-through; color:#94a3b8; }
+
+  .links { display:grid; gap:8px; grid-template-columns: 1fr; }
+  .links a {
+    display:flex; align-items:center; gap:10px; padding: 12px 12px; border:1px solid var(--line);
+    border-radius:10px; text-decoration:none; color: var(--ink); background:#fafbfd; font-size:14px;
+    min-height:46px;
+  }
+  .links a:active { background:#eef2f7; }
+  .links a .dot { width:9px; height:9px; border-radius:50%; background: var(--accent); flex-shrink:0; }
+
+  .kpis { display:grid; gap:8px; grid-template-columns: 1fr 1fr; }
+  .kpi { border:1px solid var(--line); border-radius:12px; padding: 10px 12px; background:#fafbfd; }
+  .kpi .l { font-size:10.5px; color:#64748b; text-transform: uppercase; letter-spacing:.4px; font-weight:800; }
+  .kpi .v { font-size:20px; font-weight:800; margin-top:2px; }
+  .kpi .t { font-size:11px; color:#64748b; margin-top:2px; }
+  .kpi input { width:100%; border:0; background:transparent; font-size:20px; font-weight:800; padding:0; outline:none; min-height:32px; }
+
+  .bc { display:grid; gap:8px; grid-template-columns: 1fr; }
+  .competitor { border:1px solid var(--line); border-radius:12px; padding:11px 12px; background:#fafbfd; }
+  .competitor h4 { margin:0 0 4px; font-size:14px; }
+  .competitor .lvl { font-size:10.5px; padding:2px 7px; border-radius:6px; font-weight:800; }
+  .competitor .strengths, .competitor .weaknesses, .competitor .counter { font-size:13px; margin:4px 0; line-height:1.4; }
+  .competitor .strengths::before { content:"+ "; color:#16a34a; font-weight:800; }
+  .competitor .weaknesses::before { content:"- "; color:#dc2626; font-weight:800; }
+  .competitor .counter::before { content:"> "; color:#475569; font-weight:800; }
+
+  textarea, input[type=text] {
+    width:100%; resize: vertical; padding:11px 12px; border:1px solid var(--line);
+    border-radius:10px; background:#fafbfd; color: var(--ink); min-height:44px;
+  }
+  textarea { min-height: 110px; }
+  .btn { cursor:pointer; border:1px solid var(--line); background:#fff; padding:11px 14px;
+    border-radius:10px; font-weight:700; font-size:14px; min-height:44px; }
+  .btn:active { background:#f1f5f9; }
+  .btn.primary { background:#0f1720; color:#fff; border-color:#0f1720; }
+  .btn.primary:active { background:#334155; }
+  .btn.danger { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+  .progress { height:8px; background:#e6ebf2; border-radius:999px; overflow:hidden; margin-top:8px; }
+  .progress > div { height:100%; background: linear-gradient(90deg,#16a34a,#22c55e); width:0%; transition: width .3s ease; }
+
+  .hidden { display:none !important; }
+
+  .banner { background:#fff7ed; border:1px solid #fed7aa; color:#7c2d12; padding:10px 12px;
+    border-radius:12px; font-size:13px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .banner button { margin-left:auto; background:transparent; border:0; color:#7c2d12;
+    font-size:18px; line-height:1; padding: 4px 8px; }
+
+  .err-box { position: fixed; left: 8px; right: 8px; bottom: 60px;
+    background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding: 10px 12px;
+    border-radius: 10px; font-size: 12px; z-index: 100; box-shadow: var(--shadow);
+    max-height: 40vh; overflow:auto; white-space: pre-wrap; }
+
+  .spark { display:flex; align-items:flex-end; gap:4px; height:48px; margin-top:8px; }
+  .spark > div { flex:1; background: linear-gradient(180deg, #16a34a, #22c55e);
+    border-radius: 4px 4px 0 0; min-height:2px; position:relative; }
+  .spark > div.today { background: linear-gradient(180deg, #0f1720, #334155); }
+  .spark > div::after { content: attr(data-l); position:absolute; bottom:-16px; left:50%;
+    transform: translateX(-50%); font-size:10px; color:#64748b; white-space:nowrap; }
+
+  .start-step {
+    border:1px solid var(--line); border-radius:12px; padding:14px 14px;
+    margin-bottom:10px; background:#fafbfd;
+  }
+  .start-step .num {
+    display:inline-flex; width:28px; height:28px; align-items:center; justify-content:center;
+    border-radius:50%; background:#0f1720; color:#fff; font-weight:800; margin-right:8px;
+  }
+  .start-step h3 { margin:0; display:flex; align-items:center; }
+
+  /* Welcome banner - scales for phones */
+  .welcome-banner {
+    background: linear-gradient(135deg,#16a34a,#f59e0b); color:white;
+    padding: 22px 18px; border-radius: 14px; margin-bottom: 14px;
+    box-shadow: var(--shadow); text-align:center;
+  }
+  .welcome-title { font-size: 22px; font-weight: 900; margin-bottom: 6px; line-height: 1.15; }
+  .welcome-sub   { font-size: 14px; opacity:.95; line-height: 1.4; }
+  @media (min-width: 720px) {
+    .welcome-banner { padding: 30px 24px; }
+    .welcome-title  { font-size: 30px; }
+    .welcome-sub    { font-size: 16px; }
+  }
+
+  /* Tighten on small phones (iPhone SE etc) */
+  @media (max-width: 380px) {
+    .wrap { padding: 6px 8px calc(80px + var(--safe-bot)); }
+    header.top { padding: 12px 12px; }
+    header.top h1 { font-size: 15px; }
+    .clock .time { font-size: 18px; }
+    .top-actions button { padding: 6px 10px; font-size: 11.5px; min-height: 32px; }
+    .vsw button { font-size: 13px; min-height: 50px; padding: 12px 6px; }
+    nav.tabs button { min-width: 88px; font-size: 12px; padding: 9px 10px; }
+    .card { padding: 12px; }
+    .card h2 { font-size: 14px; }
+    .welcome-title { font-size: 19px; }
+    .welcome-sub   { font-size: 13px; }
+  }
+
+  @media (min-width: 720px) {
+    .wrap { padding: 18px 18px 80px; }
+    header.top h1 { font-size: 22px; }
+    header.top .sub { font-size: 13px; }
+    .clock .time { font-size: 28px; }
+    .clock .date { font-size: 13px; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); }
+    .ooda { grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); }
+    .links { grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); }
+    .kpis { grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); }
+    .bc { grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); }
+    nav.tabs { top: 90px; }
+  }
+
+  /* Larger desktop refinements */
+  @media (min-width: 1100px) {
+    header.top h1 { font-size: 24px; }
+    header.top .sub { font-size: 14px; }
+    .welcome-title { font-size: 34px; }
+    .welcome-sub   { font-size: 17px; }
+    nav.tabs button { font-size: 14px; min-width: 120px; }
+    .vsw button { font-size: 16px; min-height: 60px; }
+  }
+
+  @media print {
+    header.top, nav.tabs, .vsw, .top-actions, .banner, .btn, .js-status { display:none !important; }
+    section[data-pane] { page-break-inside: avoid; }
+    section[data-pane].hidden { display:block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="jsStatus" class="js-status">JS: not running</div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div style="min-width:0;">
+      <h1 id="hdrTitle">GM Daily Command Center</h1>
+      <div class="sub" id="hdrSub">Cleveland LeafFilter + Cleveland Lighting | OODA daily rhythm</div>
+      <div class="top-actions">
+        <button data-act="setup">Setup</button>
+        <button data-act="install">Install</button>
+        <button data-act="print">Print</button>
+        <button data-act="export">Export</button>
+      </div>
+    </div>
+    <div class="clock">
+      <div class="time" id="clockTime">--:--</div>
+      <div class="date" id="clockDate">--</div>
+    </div>
+  </header>
+
+  <div id="installBanner" class="banner hidden">
+    <span>Tap <strong>Share -&gt; Add to Home Screen</strong> to use like an app.</span>
+    <button data-act="dismissBanner" aria-label="Close">x</button>
+  </div>
+
+  <!-- Vertical switcher -->
+  <div class="vsw" role="tablist" aria-label="Vertical switcher">
+    <button data-act="vert" data-v="both"   class="active"><span class="dot"></span>Both</button>
+    <button data-act="vert" data-v="filter"><span class="dot"></span>Filter</button>
+    <button data-act="vert" data-v="light"><span class="dot"></span>Lighting</button>
+  </div>
+
+  <nav class="tabs">
+    <button class="active" data-act="tab" data-tab="start">Start Here</button>
+    <button data-act="tab" data-tab="now">Now / Today</button>
+    <button data-act="tab" data-tab="ooda">OODA</button>
+    <button data-act="tab" data-tab="checklist">Checklist</button>
+    <button data-act="tab" data-tab="weekly">Weekly</button>
+    <button data-act="tab" data-tab="kpis">KPIs</button>
+    <button data-act="tab" data-tab="reps">Reps</button>
+    <button data-act="tab" data-tab="links">Links</button>
+    <button data-act="tab" data-tab="battlecard">Battlecard</button>
+    <button data-act="tab" data-tab="cadence">12-Wk</button>
+  </nav>
+
+  <!-- ===================== START HERE (ELI5) ===================== -->
+  <section data-pane="start">
+    <div class="welcome-banner">
+      <div class="welcome-title">Welcome to your Command Center</div>
+      <div class="welcome-sub">Cleveland LeafFilter (green) + Cleveland Lighting (amber). One dashboard. One day. Tap "Start Here" any time to come back to this guide.</div>
+    </div>
+    <div class="card">
+      <h2>Start Here <span class="tag">Read once. Then run your day.</span></h2>
+      <p class="muted">This page is your one place. Two verticals: <strong style="color:var(--filter)">Filter</strong> (gutter protection) and <strong style="color:var(--light)">Lighting</strong> (permanent outdoor lighting). Tap the colored buttons up top to pick which one you're looking at.</p>
+
+      <div class="start-step">
+        <h3><span class="num">1</span> Pick a vertical</h3>
+        <p class="muted" style="margin:6px 0 0;">Top: <strong>Both</strong> shows everything. <strong>Filter</strong> hides Lighting. <strong>Lighting</strong> hides Filter. Pick whichever you're working on this minute.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">2</span> Open "Now / Today"</h3>
+        <p class="muted" style="margin:6px 0 0;">The clock at top tells you which OODA phase you're in (Observe / Orient / Decide / Act). The big colored card tells you what to do <em>right now</em>. Just do that.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">3</span> Tap the Checklist</h3>
+        <p class="muted" style="margin:6px 0 0;">Tap a box when you finish. The bar at the bottom of the screen shows how much of your day is done. Goal: green bar full by 9 PM.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">4</span> Update KPIs once a day</h3>
+        <p class="muted" style="margin:6px 0 0;">Open the KPIs tab. Type today's numbers. Red = behind. Green = on track. Source numbers from <a href="https://dashboard.noclogs.com/" target="_blank" rel="noopener">dashboard.noclogs.com</a>.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">5</span> Roster - confirm reps</h3>
+        <p class="muted" style="margin:6px 0 0;">In Reps, tap a slot box to cycle: blank -&gt; <strong style="color:#166534">C</strong>onfirmed -&gt; <strong style="color:#92400e">S</strong>haky -&gt; <strong style="color:#991b1b">x</strong> No-go. Do this twice a day.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">6</span> Before a tough sit - Battlecard</h3>
+        <p class="muted" style="margin:6px 0 0;">Open the Battlecard tab on your phone. Read the competitor's strengths, weaknesses, and your counter. Two minutes of prep beats five hours of guesswork.</p>
+      </div>
+      <div class="start-step">
+        <h3><span class="num">7</span> End of day: Issue tomorrow's leads by 9:01 PM</h3>
+        <p class="muted" style="margin:6px 0 0;">This is the hard deadline. Then hit <strong>Reset Day</strong> on the Now/Today tab. Wake up tomorrow with a clean checklist.</p>
+      </div>
+
+      <hr class="sep" />
+      <h3>Get this on your phone (iPhone)</h3>
+      <ol style="line-height:1.7; font-size:14px; padding-left:20px; color:var(--ink2);">
+        <li>On your Mac: open the <strong>GM-Command-Center</strong> folder on your Desktop.</li>
+        <li>Either: right-click the HTML file -&gt; Share -&gt; <strong>AirDrop</strong> -&gt; pick your iPhone. OR drag it into <strong>iCloud Drive</strong> -&gt; Files app on phone.</li>
+        <li>On iPhone: tap the file, it opens in Safari. Tap the <strong>Share icon</strong> (square + up arrow) -&gt; <strong>Add to Home Screen</strong> -&gt; Add.</li>
+        <li>Now there's a "GM Command" icon on your home screen. Tap it - opens full-screen like an app.</li>
+      </ol>
+
+      <h3>Get this on Android</h3>
+      <ol style="line-height:1.7; font-size:14px; padding-left:20px; color:var(--ink2);">
+        <li>Email the HTML file to yourself, or upload to Google Drive.</li>
+        <li>Open in <strong>Chrome</strong> on your Android device.</li>
+        <li>Tap the 3-dot menu -&gt; <strong>Add to Home screen</strong> / <strong>Install app</strong> -&gt; Add.</li>
+      </ol>
+
+      <h3>Important: your data is per-device</h3>
+      <p class="muted">Each device (laptop, phone) has its own copy of your KPIs, checklist progress, and roster. They do not sync automatically. That's intentional - keeps everything private. Use the <strong>Export</strong> button on the top bar if you ever want to copy a day's data between devices.</p>
+
+      <hr class="sep" />
+      <h3>Why OODA?</h3>
+      <p class="muted">Fighter pilots use it. <strong>Observe</strong> (what's happening), <strong>Orient</strong> (what does it mean), <strong>Decide</strong> (what's the play), <strong>Act</strong> (do it). Whoever loops fastest wins. Your day already has this rhythm - this dashboard just makes it visible.</p>
+
+      <h3>Privacy</h3>
+      <p class="muted">Everything you type stays on this device in your browser. Nothing is uploaded. The Export button gives you a text file to share with your team <em>if you choose to</em>. Don't share the file with anyone outside your team.</p>
+    </div>
+  </section>
+
+  <!-- ===================== NOW / TODAY ===================== -->
+  <section data-pane="now" class="hidden">
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>Right now <span id="phasePill" class="tag green">OBSERVE</span> <span class="tag" id="vNowBadge">Both</span></h2>
+        <p class="muted" id="phaseHint">Early - review yesterday before issuing today.</p>
+        <div id="rightNow"></div>
+        <hr class="sep" />
+        <div class="row"><strong>Day progress</strong><span class="spacer"></span><span class="muted" id="dayPct">0%</span></div>
+        <div class="progress"><div id="dayBar"></div></div>
+      </div>
+      <div class="card">
+        <h2>Wins so far</h2>
+        <div class="kpis">
+          <div class="kpi"><div class="l">Tasks done</div><div class="v" id="tasksDone">0</div><div class="t">of <span id="tasksTotal">0</span></div></div>
+          <div class="kpi"><div class="l">Done %</div><div class="v" id="tasksPct">0%</div><div class="t">checklist</div></div>
+          <div class="kpi"><div class="l">Blockers</div><div class="v" id="openBlockers">0</div><div class="t">in notes</div></div>
+        </div>
+        <h3>7-day completion trend</h3>
+        <div class="spark" id="sparkline"></div>
+        <hr class="sep" />
+        <h3>Top 3 priorities for today</h3>
+        <textarea id="top3" placeholder="1)
+2)
+3)"></textarea>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:12px;">
+      <div class="card"><h2>Hour-by-hour rhythm</h2><div id="rhythm"></div></div>
+      <div class="card">
+        <h2>Notes / blockers / wins</h2>
+        <textarea id="notes" placeholder="Drop running notes here. Saved automatically. Type BLOCK at the start of any line to track blockers."></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn" data-act="dlNotes">Download today (.txt)</button>
+          <button class="btn" data-act="emailNotes">Email today</button>
+          <button class="btn danger" data-act="resetDay">Reset day</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OODA ===================== -->
+  <section data-pane="ooda" class="hidden">
+    <div class="card" style="margin-bottom:12px;">
+      <h2>The Daily OODA Loop <span class="tag">Observe -&gt; Orient -&gt; Decide -&gt; Act</span></h2>
+      <p class="muted">A fighter-pilot decision cycle. Whoever loops fastest wins. Run it once per day, with mini-loops inside each block. Same loop for Filter and Lighting - you're running one day.</p>
+      <div class="ooda">
+        <div class="quad observe"><span class="badge">6:00-9:00 AM</span><h3>OBSERVE</h3><p class="q"><strong>What happened yesterday &amp; overnight?</strong></p>
+          <ul><li>KPI dashboard - yesterday's leads / sits / sales / $ (both)</li><li>SDHL: next-day coverage, Filter then Lighting</li><li>Email + Teams + GroupMe scan for fires</li><li>IJNF / hold / install / retail spreadsheets</li><li>Escalated services queue</li></ul>
+        </div>
+        <div class="quad orient"><span class="badge">9:00 AM-12:00 PM</span><h3>ORIENT</h3><p class="q"><strong>Where are the gaps and who needs what?</strong></p>
+          <ul><li>Submit leads by 8 AM</li><li>Check today's lead sheet for dups</li><li>Rep cal - confirmed vs shaky (both verticals)</li><li>PM meeting - installs / hold / retail / IJNF</li><li>Pick the 1 rep who needs you today (alternate Filter / Lighting weekly)</li></ul>
+        </div>
+        <div class="quad decide"><span class="badge">12:00-3:00 PM</span><h3>DECIDE</h3><p class="q"><strong>What's the priority play?</strong></p>
+          <ul><li>Coaching priority: who, what, when</li><li>Rehash: 5 Filter + 3 Lighting</li><li>Recruiting: 3 outreach moves on Fountain</li><li>Tonight's huddle training topic</li><li>Hold spreadsheet decisions (both)</li></ul>
+        </div>
+        <div class="quad act"><span class="badge">3:00-9:01 PM</span><h3>ACT</h3><p class="q"><strong>Execute and prep tomorrow.</strong></p>
+          <ul><li>Run leads / phone drops (Lighting dusk demos prioritized)</li><li>Scrub each sale's PPWK</li><li>Manage lead sheet</li><li><strong>Issue next-day leads by 9:01 PM (both)</strong></li><li>Confirm rep confirmations</li></ul>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Why OODA works for a two-vertical GM</h2>
+      <p class="muted" style="font-size:13.5px; line-height:1.5;">Filter is volume with a tight close. Lighting is fewer leads, higher ticket, longer sit. Different cadence, same brain. Without OODA you'll spend the day chasing whichever fire is loudest. With it: <em>look</em> at both verticals, <em>orient</em> on where the gap actually is, <em>decide</em> the one move that moves the needle, <em>act</em>. The trap is jumping straight to ACT in one vertical while the other slips quietly.</p>
+    </div>
+  </section>
+
+  <!-- ===================== CHECKLIST ===================== -->
+  <section data-pane="checklist" class="hidden">
+    <div id="chkFilterCard" class="card filter">
+      <h2><span class="tag filter">CLE FILTER</span> Daily checklist</h2>
+      <ul class="checklist" id="cklFilter"></ul>
+    </div>
+    <div id="chkLightCard" class="card light" style="margin-top:12px;">
+      <h2><span class="tag light">CLE LIGHTING</span> Daily checklist</h2>
+      <ul class="checklist" id="cklLight"></ul>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <h2>Add a custom task</h2>
+      <div class="row" style="gap:6px;">
+        <select id="newTaskVert" class="btn" style="flex:1; min-width:100px;">
+          <option value="filter">Filter</option>
+          <option value="light">Lighting</option>
+        </select>
+        <select id="newTaskWhen" class="btn" style="flex:1; min-width:120px;">
+          <option value="OBSERVE">OBSERVE</option>
+          <option value="ORIENT">ORIENT</option>
+          <option value="DECIDE">DECIDE</option>
+          <option value="ACT">ACT</option>
+        </select>
+      </div>
+      <input id="newTaskText" type="text" placeholder="e.g. Walk-up zone color demo at 5pm" style="margin-top:6px;" />
+      <button class="btn primary" style="width:100%; margin-top:8px;" data-act="addCustomTask">Add task</button>
+    </div>
+  </section>
+
+  <!-- ===================== WEEKLY ===================== -->
+  <section data-pane="weekly" class="hidden">
+    <div class="card"><h2>Weekly cadence</h2><p class="muted">Anchored to Mon-Sun. Today is highlighted. Items marked F = Filter, L = Lighting, * = both.</p>
+      <div class="grid grid-3" id="weeklyGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== KPIs ===================== -->
+  <section data-pane="kpis" class="hidden">
+    <div id="kpiFilterCard" class="card filter">
+      <h2><span class="tag filter">CLE FILTER</span> Today's KPIs</h2>
+      <div class="kpis" id="kpiFilter"></div>
+      <p class="muted" style="margin-top:8px;">Targets: 30 leads / 18 sits / 5 sales / $12K net / $2.4K avg / 5% cancel. Source: <a href="https://dashboard.noclogs.com/" target="_blank" rel="noopener">dashboard.noclogs.com</a>.</p>
+    </div>
+    <div id="kpiLightCard" class="card light" style="margin-top:12px;">
+      <h2><span class="tag light">CLE LIGHTING</span> Today's KPIs</h2>
+      <div class="kpis" id="kpiLight"></div>
+      <p class="muted" style="margin-top:8px;">Targets (edit me): 12 leads / 8 sits / 3 sales / $27K net / $9K avg / 7% cancel. Source: <a href="https://dashboard.noclogs.com/" target="_blank" rel="noopener">dashboard.noclogs.com</a>.</p>
+    </div>
+    <div class="card" style="margin-top:12px;"><h2>What "good" looks like</h2>
+      <p class="muted" style="font-size:13.5px;">Filter is volume x close - watch <strong>sit %</strong>, the single biggest leading indicator. Lighting is fewer leads at higher ticket - watch <strong>close %</strong> and <strong>avg ticket</strong>; a $2K swing per sit is the whole game.</p>
+    </div>
+  </section>
+
+  <!-- ===================== REPS ===================== -->
+  <section data-pane="reps" class="hidden">
+    <div id="repFilterCard" class="card filter">
+      <h2><span class="tag filter">CLE FILTER</span> Roster</h2>
+      <p class="muted">Slots: 9A | 11A | 1P | 3P | 5P | 7P. Tap a slot to cycle Confirmed / Shaky / No-go.</p>
+      <div id="repFilter"></div>
+      <div class="row" style="margin-top:8px;">
+        <input id="newRepFilter" type="text" placeholder="Add Filter rep - Last, First" style="flex:1;" />
+        <button class="btn primary" data-act="addRep" data-vert="filter">Add</button>
+      </div>
+    </div>
+    <div id="repLightCard" class="card light" style="margin-top:12px;">
+      <h2><span class="tag light">CLE LIGHTING</span> Roster</h2>
+      <p class="muted">Same 6-slot day for Lighting. Lighting sits run longer - allow the 5P+ window for dusk demos.</p>
+      <div id="repLight"></div>
+      <div class="row" style="margin-top:8px;">
+        <input id="newRepLight" type="text" placeholder="Add Lighting rep - Last, First" style="flex:1;" />
+        <button class="btn primary" data-act="addRep" data-vert="light">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LINKS ===================== -->
+  <section data-pane="links" class="hidden">
+    <div class="card"><h2>Apps &amp; portals (shared across both verticals)</h2>
+      <div class="links" id="linksAll"></div>
+    </div>
+    <div class="card" style="margin-top:12px;"><h2>Phone apps to keep on your home screen</h2>
+      <p class="muted" style="font-size:13.5px;">OKTA Verify, UGK Pro, Teams (notify on), GroupMe, SAP Concur, Outlook, CamScanner, Refer-Pro, Go Learn, LeafApp, Lighting App, Ops App, Lowes Portal, Versatile, MS Authenticator, LinkedIn, Indeed, Fountain.</p>
+    </div>
+  </section>
+
+  <!-- ===================== BATTLECARD ===================== -->
+  <section data-pane="battlecard" class="hidden">
+    <div id="bcFilterCard" class="card filter">
+      <h2><span class="tag filter">CLE FILTER</span> Cleveland gutter-protection</h2>
+      <div class="bc" id="bcFilter"></div><hr class="sep" />
+      <h3>Universal Filter counter-objections</h3>
+      <ul class="muted" style="font-size:13.5px; line-height:1.5;">
+        <li><strong>"Cheaper option online":</strong> compare warranty - most are not transferable, ours is. Labor warranty is what costs.</li>
+        <li><strong>"Already have guards":</strong> ride-along; most "guards" are screens - different category. Show micromesh demo.</li>
+        <li><strong>"Need to think":</strong> appointment-day pricing tied to install schedule. Be specific, not pushy.</li>
+        <li><strong>"It's just leaves":</strong> show ice-dam, mosquito-breeding, foundation-erosion photos. Gutters protect the house, not just look pretty.</li>
+      </ul>
+    </div>
+    <div id="bcLightCard" class="card light" style="margin-top:12px;">
+      <h2><span class="tag light">CLE LIGHTING</span> Cleveland permanent outdoor lighting</h2>
+      <div class="bc" id="bcLight"></div><hr class="sep" />
+      <h3>Universal Lighting counter-objections</h3>
+      <ul class="muted" style="font-size:13.5px; line-height:1.5;">
+        <li><strong>"I already do Christmas lights":</strong> our system is permanent + everyday accent + holidays + party scenes from the app. Pays back in ~3 seasons vs annual rental.</li>
+        <li><strong>"Too expensive":</strong> compare the 10-year cost: annual seasonal rental is ~$1.5-3K/year on a 2-story. Permanent is once. Plus daily curb appeal value.</li>
+        <li><strong>"Looks tacky in daylight":</strong> aluminum channel is recessed, color-matched. Show the daytime fascia shot vs. the dusk activation video.</li>
+        <li><strong>"I'll do it myself with Home Depot lights":</strong> bulb density, channel rigidity, app integration, install warranty. Side-by-side fixture demo.</li>
+        <li><strong>"Need to think":</strong> install windows fill fast in Q3/Q4. Lock the deposit, lock the slot. Same pricing logic as Filter - tied to schedule.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 12-WEEK CADENCE ===================== -->
+  <section data-pane="cadence" class="hidden">
+    <div class="card"><h2>12-Week GM Cadence</h2><p class="muted">Daily fights are won. Quarters are designed.</p>
+      <div class="grid grid-3" id="cadenceGrid"></div>
+    </div>
+  </section>
+
+  <footer style="margin-top:20px; text-align:center; color:#94a3b8; font-size:11px;">
+    Saves on this device only. Reset day clears today's checklist. v6 CLE Filter + CLE Lighting | <a href="#" data-act="reload" style="color:inherit;">Refresh</a>
+  </footer>
+</div>
+
+<div id="errBox" class="err-box hidden"></div>
+
+<script>
+(function(){
+  "use strict";
+  function showStatus(ok, msg) {
+    var el = document.getElementById("jsStatus");
+    if (!el) return;
+    if (ok) { el.className = "js-status ok"; el.textContent = "JS: " + (msg || "running"); }
+    else    { el.className = "js-status";    el.textContent = "JS: " + (msg || "error"); }
+  }
+  function showErr(e) {
+    try {
+      var box = document.getElementById("errBox");
+      if (!box) return;
+      box.classList.remove("hidden");
+      box.textContent = "Error: " + (e && e.message ? e.message : e) + "\n\n" + (e && e.stack ? e.stack : "");
+    } catch(_){}
+  }
+  window.addEventListener("error", function(ev){ showErr(ev.error || ev.message); });
+  window.addEventListener("unhandledrejection", function(ev){ showErr(ev.reason); });
+
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function(){
+    try { boot(); } catch(e) { showStatus(false, "boot error"); showErr(e); }
+  });
+
+  function boot() {
+    showStatus(true, "running");
+
+    var TODAY = new Date().toISOString().slice(0,10);
+    var TODAY_KEY  = "gmcc6:" + TODAY;
+    var STATIC_KEY = "gmcc6:static";
+    var HIST_KEY   = "gmcc6:history";
+    var PROFILE_KEY= "gmcc6:profile";
+    var VERT_KEY   = "gmcc6:vert";
+
+    var state = {
+      tab: "start",
+      tasks: {}, custom: [], notes: "", top3: "",
+      kpis: { filter: {}, light: {} },
+      reps: { filter: [], light: [] }
+    };
+    var profile = { name:"", office:"Cleveland LeafFilter + Lighting", short:"CLE / GM" };
+    var vert = "both"; // both | filter | light
+
+    function load() {
+      try {
+        var t = JSON.parse(localStorage.getItem(TODAY_KEY) || "{}");
+        for (var k in t) { state[k] = t[k]; }
+        if (!state.kpis) state.kpis = { filter:{}, light:{} };
+        if (!state.kpis.filter) state.kpis.filter = {};
+        if (!state.kpis.light)  state.kpis.light  = {};
+        var s = JSON.parse(localStorage.getItem(STATIC_KEY) || "{}");
+        if (s && s.reps) {
+          state.reps = s.reps;
+          if (!state.reps.filter) state.reps.filter = [];
+          if (!state.reps.light)  state.reps.light  = [];
+        }
+        var p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+        if (p && typeof p === "object") {
+          if (p.name)   profile.name = p.name;
+          if (p.office) profile.office = p.office;
+          if (p.short)  profile.short = p.short;
+        }
+        var v = localStorage.getItem(VERT_KEY);
+        if (v === "filter" || v === "light" || v === "both") vert = v;
+      } catch(e) {}
+    }
+    function saveToday() { try { localStorage.setItem(TODAY_KEY, JSON.stringify(state)); } catch(e){} }
+    function saveStatic() { try { localStorage.setItem(STATIC_KEY, JSON.stringify({ reps: state.reps })); } catch(e){} }
+    function saveProfile() { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch(e){} }
+    function saveVert() { try { localStorage.setItem(VERT_KEY, vert); } catch(e){} }
+
+    function loadHistory() {
+      try { return JSON.parse(localStorage.getItem(HIST_KEY) || "{}") || {}; } catch(e) { return {}; }
+    }
+    function saveHistoryToday(pct) {
+      try {
+        var h = loadHistory();
+        h[TODAY] = pct;
+        var keys = Object.keys(h).sort();
+        while (keys.length > 30) { delete h[keys.shift()]; }
+        localStorage.setItem(HIST_KEY, JSON.stringify(h));
+      } catch(e){}
+    }
+
+    function esc(s) {
+      if (s == null) return "";
+      return String(s).replace(/[&<>"']/g, function(m){
+        return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[m];
+      });
+    }
+
+    function applyProfile() {
+      var hdr = document.getElementById("hdrTitle");
+      var sub = document.getElementById("hdrSub");
+      if (profile.name) hdr.textContent = profile.name + " - GM Command Center";
+      else hdr.textContent = "GM Daily Command Center";
+      sub.textContent = (profile.office || "Cleveland LeafFilter + Lighting") + " | OODA daily rhythm";
+    }
+
+    function applyVert() {
+      var btns = document.querySelectorAll(".vsw button");
+      for (var i=0;i<btns.length;i++) {
+        if (btns[i].getAttribute("data-v") === vert) btns[i].classList.add("active");
+        else btns[i].classList.remove("active");
+      }
+      var showF = (vert === "both" || vert === "filter");
+      var showL = (vert === "both" || vert === "light");
+      var pairs = [
+        ["chkFilterCard","chkLightCard"],
+        ["kpiFilterCard","kpiLightCard"],
+        ["repFilterCard","repLightCard"],
+        ["bcFilterCard","bcLightCard"]
+      ];
+      pairs.forEach(function(p){
+        var fEl = document.getElementById(p[0]);
+        var lEl = document.getElementById(p[1]);
+        if (fEl) fEl.style.display = showF ? "" : "none";
+        if (lEl) lEl.style.display = showL ? "" : "none";
+      });
+      var badge = document.getElementById("vNowBadge");
+      if (badge) {
+        if (vert === "filter") { badge.textContent = "Filter"; badge.className = "tag filter"; }
+        else if (vert === "light") { badge.textContent = "Lighting"; badge.className = "tag light"; }
+        else { badge.textContent = "Both"; badge.className = "tag"; }
+      }
+      saveVert();
+      recomputeProgress();
+    }
+    function setVert(v) { vert = v; applyVert(); }
+
+    function tick() {
+      var d = new Date();
+      var hh = (d.getHours()+"").length<2 ? "0"+d.getHours() : ""+d.getHours();
+      var mm = (d.getMinutes()+"").length<2 ? "0"+d.getMinutes() : ""+d.getMinutes();
+      document.getElementById("clockTime").textContent = hh + ":" + mm;
+      try {
+        document.getElementById("clockDate").textContent = d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" });
+      } catch(e) {
+        document.getElementById("clockDate").textContent = d.toDateString();
+      }
+      var h = d.getHours();
+      var phase, hint, cls;
+      if (h < 9)        { phase="OBSERVE"; cls="blue";  hint="Early - review yesterday before issuing today's leads (both)."; }
+      else if (h < 12)  { phase="ORIENT";  cls="amber"; hint="Mid-morning - identify the gap, pick a coaching target."; }
+      else if (h < 15)  { phase="DECIDE";  cls="amber"; hint="Mid-day - make the priority decision (which vertical needs the move today?)."; }
+      else              { phase="ACT";     cls="green"; hint="Evening - execute, scrub PPWK, issue next-day leads by 9:01 PM."; }
+      var pp = document.getElementById("phasePill");
+      if (pp) { pp.textContent = phase; pp.className = "tag " + cls; }
+      var pH = document.getElementById("phaseHint");
+      if (pH) pH.textContent = hint;
+      var start = new Date(d); start.setHours(6,0,0,0);
+      var end   = new Date(d); end.setHours(21,0,0,0);
+      var pct = Math.max(0, Math.min(100, ((d - start) / (end - start)) * 100));
+      var bar = document.getElementById("dayBar");
+      var pctL = document.getElementById("dayPct");
+      if (bar) bar.style.width = pct.toFixed(0) + "%";
+      if (pctL) pctL.textContent = pct.toFixed(0) + "%";
+      renderRightNow(phase);
+    }
+
+    function setTab(name) {
+      state.tab = name; saveToday();
+      var tabs = document.querySelectorAll("nav.tabs button");
+      for (var i=0;i<tabs.length;i++) {
+        if (tabs[i].getAttribute("data-tab") === name) tabs[i].classList.add("active");
+        else tabs[i].classList.remove("active");
+      }
+      var panes = document.querySelectorAll("section[data-pane]");
+      for (var j=0;j<panes.length;j++) {
+        if (panes[j].getAttribute("data-pane") === name) panes[j].classList.remove("hidden");
+        else panes[j].classList.add("hidden");
+      }
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch(e) { window.scrollTo(0,0); }
+    }
+
+    // ---------- Tasks (per vertical) ----------
+    var FILTER_TASKS = [
+      { id:"f-email",   when:"OBSERVE", text:"Manage email all day" },
+      { id:"f-sdhl",    when:"OBSERVE", text:"Check SDHL - verify next-day lead coverage" },
+      { id:"f-submit",  when:"OBSERVE", text:"Submit leads by 8 AM" },
+      { id:"f-dups",    when:"ORIENT",  text:"Check today's lead sheet for dups" },
+      { id:"f-rehash",  when:"ORIENT",  text:"Rehash - pull 5 leads from yesterday's no-sales/holds" },
+      { id:"f-leadmgr", when:"ORIENT",  text:"Manage lead sheet (SDs, results, docs)" },
+      { id:"f-pm",      when:"ORIENT",  text:"PM meeting - installs / holds / retail" },
+      { id:"f-install", when:"DECIDE",  text:"Install spreadsheet - scrub & approve" },
+      { id:"f-retail",  when:"DECIDE",  text:"Retail spreadsheet - review & file" },
+      { id:"f-hold",    when:"DECIDE",  text:"Hold spreadsheet - chase, close, kill" },
+      { id:"f-ijnf",    when:"DECIDE",  text:"IJNF - review and act" },
+      { id:"f-recruit", when:"DECIDE",  text:"Recruit - 3 outreach moves on Fountain" },
+      { id:"f-train",   when:"DECIDE",  text:"Pick tonight's huddle training topic" },
+      { id:"f-runlead", when:"ACT",     text:"Run leads / phone drops as needed" },
+      { id:"f-scrub",   when:"ACT",     text:"Scrub each sale's PPWK" },
+      { id:"f-repcal",  when:"ACT",     text:"Rep cal - confirm tomorrow's slots" },
+      { id:"f-issue",   when:"ACT",     text:"Issue next-day leads by 9:01 PM" },
+      { id:"f-confirm", when:"ACT",     text:"Check rep confirmation of leads" },
+      { id:"f-esc",     when:"ACT",     text:"Escalated services - clear daily queue" }
+    ];
+    var LIGHT_TASKS = [
+      { id:"l-email",   when:"OBSERVE", text:"Manage email + Lighting GroupMe" },
+      { id:"l-sdhl",    when:"OBSERVE", text:"Check SDHL - Lighting coverage" },
+      { id:"l-submit",  when:"OBSERVE", text:"Submit Lighting leads by 8 AM" },
+      { id:"l-dups",    when:"ORIENT",  text:"Lead sheet dup check - Lighting" },
+      { id:"l-rehash",  when:"ORIENT",  text:"Rehash 3 Lighting leads (no-sales + relight) " },
+      { id:"l-leadmgr", when:"ORIENT",  text:"Manage Lighting lead sheet (SDs, results, docs)" },
+      { id:"l-pm",      when:"ORIENT",  text:"PM meeting - Lighting installs / app setup / IJNF" },
+      { id:"l-install", when:"DECIDE",  text:"Install spreadsheet - zones / fixtures / controller" },
+      { id:"l-design",  when:"DECIDE",  text:"Design review on tomorrow's sits (channel run + plug)" },
+      { id:"l-hold",    when:"DECIDE",  text:"Hold spreadsheet - chase, close, kill" },
+      { id:"l-ijnf",    when:"DECIDE",  text:"IJNF - review and act" },
+      { id:"l-recruit", when:"DECIDE",  text:"Recruit - 3 outreach moves (design eye + closer)" },
+      { id:"l-train",   when:"DECIDE",  text:"Huddle topic: color / zone / scene of the night" },
+      { id:"l-runlead", when:"ACT",     text:"Run priority dusk-demo sits" },
+      { id:"l-scrub",   when:"ACT",     text:"Scrub PPWK - zones, fixtures, app login emailed" },
+      { id:"l-repcal",  when:"ACT",     text:"Rep cal - confirm tomorrow's slots" },
+      { id:"l-issue",   when:"ACT",     text:"Issue next-day Lighting leads by 9:01 PM" },
+      { id:"l-confirm", when:"ACT",     text:"Check Lighting rep confirmations" }
+    ];
+    var WHEN_LABEL = { OBSERVE:"OBS", ORIENT:"ORN", DECIDE:"DEC", ACT:"ACT" };
+
+    function renderChecklistFor(vertKey, ulId, tasks) {
+      var ul = document.getElementById(ulId);
+      if (!ul) return;
+      ul.innerHTML = "";
+      var custom = state.custom.filter(function(c){ return c.vert === vertKey; })
+        .map(function(c){ return { id:c.id, when:c.when, text:c.text, custom:true }; });
+      var all = tasks.concat(custom);
+      all.forEach(function(t) {
+        var li = document.createElement("li");
+        var done = !!state.tasks[t.id];
+        li.className = done ? "done" : "";
+        var cb = document.createElement("input");
+        cb.type = "checkbox"; cb.checked = done;
+        cb.setAttribute("data-act","toggleTask"); cb.setAttribute("data-id", t.id);
+        var label = document.createElement("div"); label.className = "label";
+        label.innerHTML = esc(t.text) + (t.custom ? ' <span class="tag">custom</span>' : '');
+        var when = document.createElement("div"); when.className = "when";
+        when.textContent = WHEN_LABEL[t.when];
+        li.appendChild(cb); li.appendChild(label); li.appendChild(when);
+        ul.appendChild(li);
+      });
+    }
+    function renderChecklist() {
+      renderChecklistFor("filter", "cklFilter", FILTER_TASKS);
+      renderChecklistFor("light",  "cklLight",  LIGHT_TASKS);
+      recomputeProgress();
+    }
+    function toggleTask(id, val) { state.tasks[id] = val; saveToday(); renderChecklist(); }
+    function addCustomTask() {
+      var v = document.getElementById("newTaskVert").value;
+      var w = document.getElementById("newTaskWhen").value;
+      var t = document.getElementById("newTaskText").value.replace(/^\s+|\s+$/g,"");
+      if (!t) return;
+      state.custom.push({ id: "c-"+Date.now(), vert:v, when:w, text:t });
+      document.getElementById("newTaskText").value = "";
+      saveToday(); renderChecklist();
+    }
+    function recomputeProgress() {
+      var total = 0, done = 0;
+      var pool = [];
+      if (vert === "both" || vert === "filter") pool = pool.concat(FILTER_TASKS);
+      if (vert === "both" || vert === "light")  pool = pool.concat(LIGHT_TASKS);
+      var custom = state.custom.filter(function(c){
+        if (vert === "both") return true;
+        return c.vert === vert;
+      });
+      pool.concat(custom).forEach(function(t) { total++; if (state.tasks[t.id]) done++; });
+      var pct = total ? Math.round(done/total*100) : 0;
+      var dEl = document.getElementById("tasksDone");
+      var tEl = document.getElementById("tasksTotal");
+      var pEl = document.getElementById("tasksPct");
+      if (dEl) dEl.textContent = done;
+      if (tEl) tEl.textContent = total;
+      if (pEl) pEl.textContent = pct + "%";
+      var blockers = ((state.notes || "").match(/^BLOCK/gim) || []).length;
+      var bEl = document.getElementById("openBlockers");
+      if (bEl) bEl.textContent = blockers;
+      saveHistoryToday(pct);
+      renderSparkline();
+    }
+    function renderSparkline() {
+      var h = loadHistory();
+      var days = [];
+      for (var i=6; i>=0; i--) {
+        var d = new Date(); d.setDate(d.getDate() - i);
+        var key = d.toISOString().slice(0,10);
+        var lbl = ["S","M","T","W","T","F","S"][d.getDay()];
+        days.push({ key: key, lbl: lbl, val: h[key] || 0, today: key === TODAY });
+      }
+      var el = document.getElementById("sparkline");
+      if (!el) return;
+      el.innerHTML = days.map(function(d){
+        var hpx = Math.max(2, Math.round(d.val * 48 / 100));
+        return '<div style="height:'+hpx+'px;" class="'+(d.today?'today':'')+'" data-l="'+d.lbl+'" title="'+d.key+': '+d.val+'%"></div>';
+      }).join("");
+    }
+
+    function renderRightNow(phase) {
+      var tips = {
+        OBSERVE: ["Open KPI dashboard - both verticals","Scan SDHL coverage tomorrow (F + L)","Triage email / Teams / GroupMe","Spreadsheets quick scan: install, hold, retail, IJNF"],
+        ORIENT:  ["Which vertical is behind today? Move there","Pick the 1 rep who needs you today","Confirm PM meeting agenda","Identify the biggest gap from yesterday"],
+        DECIDE:  ["Coaching priority: who, what, when","Rehash list: 5 Filter + 3 Lighting","Recruiting: 3 outreach moves","Tonight's training topic (alternate F / L)"],
+        ACT:     ["Run priority leads (Lighting dusk demos)","Scrub PPWK on each sale","Issue tomorrow's leads by 9:01 PM (both)","Confirm rep confirmations"]
+      };
+      var list = tips[phase] || tips.OBSERVE;
+      var html = '<ul class="checklist">';
+      for (var i=0;i<list.length;i++) {
+        html += '<li><input type="checkbox" data-act="rnTick" /><div class="label">' + list[i] + '</div></li>';
+      }
+      html += '</ul>';
+      var el = document.getElementById("rightNow");
+      if (el) el.innerHTML = html;
+    }
+
+    var RHYTHM = [
+      ["6:00 AM","OBSERVE","Wake, hydrate. Skim KPI dashboard (both)."],
+      ["7:00 AM","OBSERVE","Email triage. SDHL coverage check (F + L)."],
+      ["8:00 AM","OBSERVE","Submit leads (both). Lead sheet dup check."],
+      ["9:00 AM","ORIENT","Rep cal review - F first (volume), then L."],
+      ["10:00 AM","ORIENT","PM meeting (both)."],
+      ["11:00 AM","ORIENT","Coaching reach-out (alternate F / L weekly)."],
+      ["12:00 PM","DECIDE","Eat. Mid-day lead sheet review (both)."],
+      ["1:00 PM","DECIDE","Rehash 5 F + 3 L. 3 recruiting moves."],
+      ["2:00 PM","DECIDE","Hold/install decisions (both)."],
+      ["3:00 PM","ACT","Phone drops - confirm reps."],
+      ["4:00 PM","ACT","Scrub today's PPWK (L: zones/fixtures/app)."],
+      ["5:00 PM","ACT","First wave of next-day leads. L dusk demos priority."],
+      ["6:00 PM","ACT","Pre-evening huddle (alternate F / L)."],
+      ["7:00 PM","ACT","Final lead results."],
+      ["8:00 PM","ACT","Final scrubs."],
+      ["9:00 PM","ACT","Issue next-day leads by 9:01 PM (both)."]
+    ];
+    function renderRhythm() {
+      var now = new Date().getHours();
+      var html = '<div style="display:grid; gap:6px;">';
+      RHYTHM.forEach(function(r) {
+        var t=r[0], p=r[1], body=r[2];
+        var hour = parseInt(t,10);
+        var isPM = t.indexOf("PM") >= 0;
+        var h24 = isPM && hour !== 12 ? hour+12 : (!isPM && hour === 12 ? 0 : hour);
+        var isNow = h24 === now;
+        var cls = isNow ? "background:#f0fdf4;border-color:#bbf7d0;" : "";
+        var tagCls = p==='OBSERVE'?'blue':p==='ORIENT'?'amber':p==='DECIDE'?'amber':'green';
+        html += '<div style="display:flex;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;'+cls+'">' +
+          '<div style="width:64px;font-weight:700;color:#334155;font-size:12.5px;">'+t+'</div>' +
+          '<div style="width:50px;"><span class="tag '+tagCls+'" style="font-size:10px;">'+p+'</span></div>' +
+          '<div style="flex:1;font-size:12.5px;color:#334155;">'+body+(isNow?' <strong style="color:#16a34a;">[ now ]</strong>':'')+'</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      var el = document.getElementById("rhythm");
+      if (el) el.innerHTML = html;
+    }
+
+    var WEEKLY = [
+      { day:"Monday",    items:["* Week kickoff huddle","* Pipeline review","* Set the week's number","* Recruiting: post 2 ads"]},
+      { day:"Tuesday",   items:["F Coaching ride-along - 1 rep","L Coaching ride-along - 1 rep","* Lead-source review","* Audit demo equipment"]},
+      { day:"Wednesday", items:["* Mid-week KPI vs Mon","* Hold list cleanup","F Huddle topic (Filter)","L Huddle topic (Lighting)"]},
+      { day:"Thursday",  items:["F Coaching ride-along - 1 rep","L Coaching ride-along - 1 rep","* Cancel-rate review","* Begin next-week schedule"]},
+      { day:"Friday",    items:["* Weekly install summary","* GTR / Local Ops bonus forms","* PPWK final scrub","* Concur expense reports"]},
+      { day:"Saturday",  items:["* Light email + SDHL only","* Rep cal lock Sun & Mon","* Personal: rest"]},
+      { day:"Sunday",    items:["* 30-min strategy block","* Plan Mon huddle topic","* Set the week's coaching focus"]}
+    ];
+    function renderWeekly() {
+      var todayIdx = new Date().getDay();
+      var order = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      var sorted = WEEKLY.slice().sort(function(a,b){ return order.indexOf(a.day) - order.indexOf(b.day); });
+      var html = "";
+      sorted.forEach(function(w) {
+        var isToday = order.indexOf(w.day) === todayIdx;
+        html += '<div class="card" style="' + (isToday?'border-color:#16a34a;background:#f0fdf4;':'') + '">' +
+          '<h3>' + w.day + (isToday?' <span class="tag green">today</span>':'') + '</h3>' +
+          '<ul style="padding-left:18px;margin:6px 0;line-height:1.5;font-size:13px;">';
+        w.items.forEach(function(i){
+          var tag = "";
+          if (i.indexOf("F ") === 0) { tag = '<span class="tag filter" style="font-size:9px;margin-right:4px;">F</span>'; i = i.slice(2); }
+          else if (i.indexOf("L ") === 0) { tag = '<span class="tag light" style="font-size:9px;margin-right:4px;">L</span>'; i = i.slice(2); }
+          else if (i.indexOf("* ") === 0) { tag = '<span class="tag" style="font-size:9px;margin-right:4px;">both</span>'; i = i.slice(2); }
+          html += '<li>'+tag+esc(i)+'</li>';
+        });
+        html += '</ul></div>';
+      });
+      var el = document.getElementById("weeklyGrid");
+      if (el) el.innerHTML = html;
+    }
+
+    var CADENCE = [
+      ["Wk 1","Set the quarter for BOTH verticals - number, hires, training arc, 1 strategic bet per side."],
+      ["Wk 2","Recruiting push - Filter volume hires + Lighting design-eye closer; 2 each by week end."],
+      ["Wk 3","Onboarding rhythm - new reps shadow + ride-along on the matching vertical."],
+      ["Wk 4","Month-1 close - clean PPWK, expense, bonus forms, hold purge (both)."],
+      ["Wk 5","Coaching deep-dive - 1:1 with every rep on goal vs actual."],
+      ["Wk 6","Mid-quarter strategy review - which vertical is leading? Lean in or rebalance."],
+      ["Wk 7","Cancel-rate war - root-cause every cancel from prior 60 days (both)."],
+      ["Wk 8","Install reset - schedule realism. Lighting installs are weather-sensitive in NE Ohio."],
+      ["Wk 9","Month-2 close. Audit retail/install/hold spreadsheets (both)."],
+      ["Wk 10","Recognition / replace bottom quartile."],
+      ["Wk 11","Pre-quarter reset - promo calendar lock; lighting demo events booked."],
+      ["Wk 12","Quarter close + retro. What worked, what to kill, what to scale - per vertical."]
+    ];
+    function renderCadence() {
+      var html = "";
+      CADENCE.forEach(function(c){
+        html += '<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafbfd;">' +
+          '<div style="font-weight:800;color:#334155;">'+c[0]+'</div>' +
+          '<div style="font-size:13.5px;margin-top:4px;color:#334155;line-height:1.4;">'+c[1]+'</div></div>';
+      });
+      var el = document.getElementById("cadenceGrid");
+      if (el) el.innerHTML = html;
+    }
+
+    var KPI_DEF_FILTER = [
+      {k:"leads",l:"Leads",t:"today / 30"},
+      {k:"sits", l:"Sits", t:"today / 18"},
+      {k:"sit",  l:"Sit %",t:"today"},
+      {k:"sold", l:"Sales",t:"today / 5"},
+      {k:"close",l:"Close %",t:"today"},
+      {k:"net",  l:"Net $",t:"today / $12K"},
+      {k:"avg",  l:"Avg $",t:"target $2.4K"},
+      {k:"cancel",l:"Cancel %",t:"WTD / 5%"}
+    ];
+    var KPI_DEF_LIGHT = [
+      {k:"leads",l:"Leads",t:"today / 12"},
+      {k:"sits", l:"Sits", t:"today / 8"},
+      {k:"sit",  l:"Sit %",t:"today"},
+      {k:"sold", l:"Sales",t:"today / 3"},
+      {k:"close",l:"Close %",t:"today"},
+      {k:"net",  l:"Net $",t:"today / $27K"},
+      {k:"avg",  l:"Avg $",t:"target $9K"},
+      {k:"cancel",l:"Cancel %",t:"WTD / 7%"}
+    ];
+    function renderKpisFor(vertKey, elId, defs) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      var bucket = state.kpis[vertKey] || {};
+      var html = "";
+      defs.forEach(function(d) {
+        var val = bucket[d.k] != null ? bucket[d.k] : "";
+        html += '<div class="kpi"><div class="l">'+d.l+'</div>' +
+                '<input data-act="kpi" data-vert="'+vertKey+'" data-k="'+d.k+'" value="'+esc(val)+'" placeholder="-" inputmode="decimal" />' +
+                '<div class="t">'+d.t+'</div></div>';
+      });
+      el.innerHTML = html;
+    }
+    function renderKpis() {
+      renderKpisFor("filter","kpiFilter",KPI_DEF_FILTER);
+      renderKpisFor("light", "kpiLight", KPI_DEF_LIGHT);
+    }
+    function setKpi(vertKey, k, val) {
+      if (!state.kpis) state.kpis = { filter:{}, light:{} };
+      if (!state.kpis[vertKey]) state.kpis[vertKey] = {};
+      state.kpis[vertKey][k] = val;
+      saveToday();
+    }
+
+    var SLOTS = ["9A","11A","1P","3P","5P","7P"];
+    function renderRepsFor(vertKey, elId) {
+      if (!state.reps[vertKey]) state.reps[vertKey] = [];
+      state.reps[vertKey].forEach(function(r){ r.slots = r.slots || {}; });
+      var wrap = document.getElementById(elId);
+      if (!wrap) return;
+      if (state.reps[vertKey].length === 0) {
+        wrap.innerHTML = '<p class="muted" style="font-size:13px; padding: 8px 0;">No reps yet - add below.</p>';
+        return;
+      }
+      var html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+        '<table style="width:100%;min-width:380px;border-collapse:collapse;font-size:13px;">' +
+        '<thead><tr style="background:#f1f5f9;">' +
+        '<th style="text-align:left;padding:8px;border-bottom:1px solid var(--line);">Rep</th>';
+      SLOTS.forEach(function(s){ html += '<th style="padding:8px;border-bottom:1px solid var(--line);">'+s+'</th>'; });
+      html += '<th style="padding:8px;border-bottom:1px solid var(--line);"></th></tr></thead><tbody>';
+      state.reps[vertKey].forEach(function(r, i) {
+        html += '<tr><td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;font-weight:700;">'+esc(r.name)+'</td>';
+        SLOTS.forEach(function(s) {
+          var val = r.slots[s] || "";
+          var cls = val === "C" ? "background:#dcfce7;" : val === "S" ? "background:#fef3c7;" : val === "X" ? "background:#fee2e2;" : "";
+          html += '<td data-act="cycleSlot" data-vert="'+vertKey+'" data-i="'+i+'" data-s="'+s+'" style="padding:14px 8px;border-bottom:1px solid #f1f5f9;text-align:center;cursor:pointer;'+cls+';min-width:36px;font-weight:700;">'+(val || ".")+'</td>';
+        });
+        html += '<td style="padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;">' +
+          '<button class="btn danger" style="padding:6px 10px;font-size:13px;min-height:32px;" data-act="removeRep" data-vert="'+vertKey+'" data-i="'+i+'">x</button>' +
+          '</td></tr>';
+      });
+      html += '</tbody></table></div>' +
+        '<p class="muted" style="font-size:11.5px;margin-top:6px;">Tap to cycle: blank -&gt; <span style="background:#dcfce7;padding:0 4px;">C</span>onfirmed -&gt; <span style="background:#fef3c7;padding:0 4px;">S</span>haky -&gt; <span style="background:#fee2e2;padding:0 4px;">x</span> No-go.</p>';
+      wrap.innerHTML = html;
+    }
+    function renderReps() {
+      renderRepsFor("filter","repFilter");
+      renderRepsFor("light", "repLight");
+    }
+    function cycleSlot(vertKey, i, s) {
+      var r = state.reps[vertKey][i];
+      var order = ["", "C", "S", "X"];
+      r.slots[s] = order[(order.indexOf(r.slots[s] || "") + 1) % order.length];
+      saveStatic(); saveToday(); renderReps();
+    }
+    function addRep(vertKey) {
+      var inp = document.getElementById(vertKey === "filter" ? "newRepFilter" : "newRepLight");
+      var name = inp.value.replace(/^\s+|\s+$/g,"");
+      if (!name) return;
+      if (!state.reps[vertKey]) state.reps[vertKey] = [];
+      state.reps[vertKey].push({ name:name, slots:{} });
+      inp.value = "";
+      saveStatic(); renderReps();
+    }
+    function removeRep(vertKey, i) {
+      var name = state.reps[vertKey][i].name;
+      showConfirm("Remove rep", "Remove " + name + " from the " + vertKey + " roster?", function(){
+        state.reps[vertKey].splice(i,1); saveStatic(); renderReps();
+      });
+    }
+
+    var LINKS = [
+      {l:"My Apps (Leaf Home)", u:"https://myapps.leafhome.com"},
+      {l:"Ops App (NoClogs)", u:"https://operations.noclogs.com"},
+      {l:"Leaf App", u:"https://leafapp.noclogs.com/"},
+      {l:"KPI Dashboard", u:"https://dashboard.noclogs.com/"},
+      {l:"Versatile (financing)", u:"https://console.versatilecredit.com/"},
+      {l:"GreenSky", u:"https://www.greensky.com/"},
+      {l:"Concora Credit", u:"https://www.concoracredit.com/"},
+      {l:"Wells Fargo Retail", u:"https://retailservices.sec.wellsfargo.com/"},
+      {l:"GTR (referrals)", u:"https://advocator.getthereferral.com/"},
+      {l:"Click Send (SMS)", u:"https://dashboard.clicksend.com/"},
+      {l:"Concur (expense)", u:"https://www.concursolutions.com/"},
+      {l:"WB Mason", u:"https://wbmason.com/"},
+      {l:"LF Supplies", u:"https://lfsupplies.com/"},
+      {l:"Rep ID Badging", u:"https://leafbadging.com/"},
+      {l:"Fountain (recruiting)", u:"https://www.fountain.com/"},
+      {l:"Indeed (recruiting)", u:"https://employers.indeed.com/"},
+      {l:"LeafFilter Cleveland", u:"https://www.leaffilter.com/locations/ohio/cleveland/"},
+      {l:"Leaf Home Lighting", u:"https://www.leafhomelighting.com/"}
+    ];
+    function renderLinks() {
+      var s = "";
+      LINKS.forEach(function(x){ s += '<a href="'+x.u+'" target="_blank" rel="noopener"><span class="dot"></span>'+esc(x.l)+'</a>'; });
+      var el = document.getElementById("linksAll");
+      if (el) el.innerHTML = s;
+    }
+
+    var BC_FILTER = [
+      { name:"LeafGuard", lvl:"high", lvlTxt:"High threat",
+        strengths:"One-piece seamless gutter; strong brand; heavy TV.",
+        weaknesses:"Replaces gutters whether you want or not; higher avg ticket; no micromesh on top.",
+        counter:"You don't always need new gutters. Our micromesh fits existing - same lifetime, less disruption." },
+      { name:"K-Guard", lvl:"med", lvlTxt:"Medium threat",
+        strengths:"Curved-hood design 20+ years; strong NE Ohio dealers.",
+        weaknesses:"Hood (not mesh) - seeds and grit get through.",
+        counter:"Hood-vs-mesh demo: pour seeds, water, granules - show what passes." },
+      { name:"Gutter Helmet", lvl:"med", lvlTxt:"Medium threat",
+        strengths:"Surface-tension reverse-curve; national brand.",
+        weaknesses:"Surface tension fails on heavy storms / steep pitches.",
+        counter:"Storm-flow demo. How often will you tolerate overflow?" },
+      { name:"MasterShield", lvl:"low", lvlTxt:"Lower threat",
+        strengths:"Micromesh competitor with similar engineering claim.",
+        weaknesses:"Smaller footprint, less consistent crews, weaker warranty.",
+        counter:"Compare warranty: transferability, labor + material, 10 years out." },
+      { name:"Local handyman", lvl:"low", lvlTxt:"Low threat",
+        strengths:"Cheap upfront. Already has the relationship.",
+        weaknesses:"No transferable warranty. No service team.",
+        counter:"In 5 years, who's still in business to come back?" }
+    ];
+    var BC_LIGHT = [
+      { name:"Jellyfish Lighting", lvl:"high", lvlTxt:"High threat",
+        strengths:"Premium national brand; aluminum channel; strong dealer network.",
+        weaknesses:"Premium price; install backlogs in season; visible channel on some fascias.",
+        counter:"Side-by-side channel + warranty + install timeline. We win on transferable labor warranty and Leaf Home install standards." },
+      { name:"Trimlight", lvl:"high", lvlTxt:"High threat",
+        strengths:"Original permanent-lighting brand; mature app; deep dealer footprint.",
+        weaknesses:"Older fixture designs; warranty varies by dealer.",
+        counter:"We're corporate-backed, not a single-owner dealer. Same engineering, transferable warranty, faster service." },
+      { name:"Gemstone Lights", lvl:"med", lvlTxt:"Medium threat",
+        strengths:"Premium channel; clean fascia look; brand momentum.",
+        weaknesses:"Highest price; longer install windows; thinner local crew bench.",
+        counter:"Comparable lifetime story. Our local crew, install speed, and price-to-value are stronger." },
+      { name:"Everlights", lvl:"med", lvlTxt:"Medium threat",
+        strengths:"Budget-friendly permanent option; aggressive online marketing.",
+        weaknesses:"Lower-grade channel/chip in some lines; spotty install standards.",
+        counter:"Fixture demo side-by-side. Cheaper today, costly later - bulb density + channel rigidity + warranty all matter." },
+      { name:"Seasonal (Christmas Decor / Brite Nites)", lvl:"med", lvlTxt:"Medium threat",
+        strengths:"Annual install/uninstall; familiar to homeowners.",
+        weaknesses:"Recurring cost every year; ladders annually; no daily-use lighting.",
+        counter:"Permanent system pays back in ~3 seasons vs annual rental. Plus everyday + party scenes from the app." },
+      { name:"Electrician / handyman DIY", lvl:"low", lvlTxt:"Low threat",
+        strengths:"Cheap upfront. Existing relationship.",
+        weaknesses:"No purpose-built channel; no app; no transferable warranty.",
+        counter:"Hard-wired bulbs aren't the same product. App-controlled channel + scene library is a different category." }
+    ];
+    function renderBCFor(elId, list) {
+      var el = document.getElementById(elId);
+      if (!el) return;
+      var s = "";
+      list.forEach(function(c) {
+        var tagCls = c.lvl==='high'?'tag red':c.lvl==='med'?'tag amber':'tag';
+        s += '<div class="competitor">' +
+          '<div class="row" style="margin-bottom:4px;"><h4>'+esc(c.name)+'</h4><span class="spacer"></span>' +
+          '<span class="lvl '+tagCls+'">'+c.lvlTxt+'</span></div>' +
+          '<div class="strengths">'+esc(c.strengths)+'</div>' +
+          '<div class="weaknesses">'+esc(c.weaknesses)+'</div>' +
+          '<div class="counter">'+esc(c.counter)+'</div></div>';
+      });
+      el.innerHTML = s;
+    }
+    function renderBC() {
+      renderBCFor("bcFilter", BC_FILTER);
+      renderBCFor("bcLight",  BC_LIGHT);
+    }
+
+    function bindNotes() {
+      var t = document.getElementById("notes");
+      var tp = document.getElementById("top3");
+      if (t)  { t.value = state.notes || "";  t.addEventListener("input", function(){ state.notes = t.value; saveToday(); recomputeProgress(); }); }
+      if (tp) { tp.value = state.top3 || "";  tp.addEventListener("input", function(){ state.top3 = tp.value; saveToday(); }); }
+    }
+
+    function showModal(title, html) {
+      var existing = document.getElementById("__gmModal");
+      if (existing) existing.parentNode.removeChild(existing);
+      var bg = document.createElement("div");
+      bg.id = "__gmModal";
+      bg.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;";
+      var box = document.createElement("div");
+      box.style.cssText = "background:#fff;padding:18px;border-radius:14px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:80vh;overflow:auto;";
+      box.innerHTML = '<h3 style="margin:0 0 8px;font-size:16px;">' + title + '</h3>' + html +
+        '<button id="__gmModalClose" class="btn primary" style="width:100%;margin-top:12px;">Close</button>';
+      bg.appendChild(box);
+      document.body.appendChild(bg);
+      bg.addEventListener("click", function(ev){ if (ev.target === bg) bg.remove(); });
+      document.getElementById("__gmModalClose").addEventListener("click", function(){ bg.remove(); });
+      return box;
+    }
+    function showConfirm(title, message, onYes) {
+      var existing = document.getElementById("__gmModal");
+      if (existing) existing.parentNode.removeChild(existing);
+      var bg = document.createElement("div");
+      bg.id = "__gmModal";
+      bg.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;";
+      var box = document.createElement("div");
+      box.style.cssText = "background:#fff;padding:18px;border-radius:14px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);";
+      box.innerHTML = '<h3 style="margin:0 0 8px;font-size:16px;">' + esc(title) + '</h3>' +
+        '<p style="margin:0 0 14px;font-size:13.5px;color:#475569;line-height:1.5;">' + esc(message) + '</p>' +
+        '<div style="display:flex;gap:8px;">' +
+        '<button id="__gmCancel" class="btn" style="flex:1;">Cancel</button>' +
+        '<button id="__gmYes" class="btn danger" style="flex:1;">Confirm</button>' +
+        '</div>';
+      bg.appendChild(box);
+      document.body.appendChild(bg);
+      function close(){ bg.remove(); }
+      bg.addEventListener("click", function(ev){ if (ev.target === bg) close(); });
+      document.getElementById("__gmCancel").addEventListener("click", close);
+      document.getElementById("__gmYes").addEventListener("click", function(){
+        close(); try { onYes(); } catch(e){ showErr(e); }
+      });
+    }
+
+    function showSetup() {
+      var content = '<p style="font-size:13px;color:#475569;margin:0 0 10px;">Personalize this dashboard. Saves on your device only.</p>' +
+        '<label style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">Your name</label>' +
+        '<input id="__gmName" type="text" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;" value="'+esc(profile.name)+'" placeholder="e.g. Michael Delguyd" />' +
+        '<label style="display:block;font-size:12px;font-weight:700;color:#334155;margin:10px 0 4px;">Office / verticals</label>' +
+        '<input id="__gmOffice" type="text" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;" value="'+esc(profile.office)+'" placeholder="e.g. Cleveland LeafFilter + Lighting" />' +
+        '<button id="__gmSave" class="btn primary" style="width:100%;margin-top:12px;">Save</button>';
+      var box = showModal("Setup", content);
+      document.getElementById("__gmSave").addEventListener("click", function(){
+        profile.name   = document.getElementById("__gmName").value.replace(/^\s+|\s+$/g,"");
+        profile.office = document.getElementById("__gmOffice").value.replace(/^\s+|\s+$/g,"") || "Cleveland LeafFilter + Lighting";
+        saveProfile();
+        applyProfile();
+        document.getElementById("__gmModal").remove();
+      });
+    }
+
+    function downloadNotes() {
+      var d = new Date().toISOString().slice(0,10);
+      var who = profile.name ? (profile.name + " - ") : "";
+      var text = who + "GM Daily Notes - " + d + "\n\n" +
+                 "Office: " + profile.office + "\n\n" +
+                 "Top 3:\n" + (state.top3 || "(none)") + "\n\n" +
+                 "Notes:\n" + (state.notes || "(none)");
+      try {
+        var blob = new Blob([text], { type:"text/plain" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a"); a.href = url; a.download = "gm-notes-"+d+".txt";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      } catch(e) {
+        showModal("Today's notes",
+          '<p style="font-size:13px;color:#475569;margin:0 0 8px;">Long-press the box below to copy.</p>' +
+          '<textarea readonly style="width:100%;min-height:160px;padding:8px;border:1px solid #ccc;border-radius:8px;font-size:12px;font-family:inherit;" onclick="this.select()">' + esc(text) + '</textarea>');
+      }
+    }
+    function emailNotes() {
+      var d = new Date().toISOString().slice(0,10);
+      var who = profile.name ? (profile.name + " - ") : "";
+      var subj = encodeURIComponent(who + "GM Daily Notes - " + d);
+      var body = encodeURIComponent("Office: " + profile.office + "\n\nTop 3:\n" + (state.top3 || "(none)") + "\n\nNotes:\n" + (state.notes || "(none)"));
+      window.location.href = "mailto:?subject=" + subj + "&body=" + body;
+    }
+    function exportAll() {
+      var d = new Date().toISOString().slice(0,10);
+      var payload = {
+        date: d,
+        profile: profile,
+        vertical: vert,
+        kpis: state.kpis,
+        reps: state.reps,
+        top3: state.top3,
+        notes: state.notes,
+        tasks_done: state.tasks,
+        custom_tasks: state.custom
+      };
+      var text = JSON.stringify(payload, null, 2);
+      try {
+        var blob = new Blob([text], { type:"application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a"); a.href = url; a.download = "gm-export-"+d+".json";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      } catch(e) {
+        showModal("Export", '<textarea readonly style="width:100%;min-height:200px;font-size:12px;font-family:monospace;" onclick="this.select()">' + esc(text) + '</textarea>');
+      }
+    }
+    function resetDay() {
+      showConfirm("Reset day", "Clear today's checklist, notes, KPIs, and Top-3? (Rep roster + setup stay.)", function(){
+        try { localStorage.removeItem(TODAY_KEY); } catch(e){}
+        window.location.reload();
+      });
+    }
+    function installHint() {
+      var ua = navigator.userAgent;
+      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      if (isIOS) {
+        showModal("Install on iPhone",
+          '<ol style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;color:#334155;">' +
+          '<li>Tap the <strong>Share icon</strong> (square with up-arrow) at the bottom of Safari.</li>' +
+          '<li>Scroll and tap <strong>Add to Home Screen</strong>.</li>' +
+          '<li>Tap <strong>Add</strong>.</li></ol>' +
+          '<p style="font-size:12px;color:#64748b;margin-top:8px;">Your data stays saved on this device.</p>');
+      } else {
+        showModal("Install on Android / Desktop",
+          '<ol style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;color:#334155;">' +
+          '<li>Tap the <strong>menu</strong> (3 dots, top right of Chrome).</li>' +
+          '<li>Tap <strong>Add to Home screen</strong> / <strong>Install app</strong>.</li>' +
+          '<li>Tap <strong>Add</strong>.</li></ol>');
+      }
+    }
+    function dismissBanner() { try { localStorage.setItem("gmcc6:banner","1"); } catch(e){} document.getElementById("installBanner").classList.add("hidden"); }
+    function maybeShowBanner() {
+      var dismissed = null; try { dismissed = localStorage.getItem("gmcc6:banner"); } catch(e){}
+      var isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone;
+      if (!dismissed && !isStandalone && /iPad|iPhone|iPod|Android/.test(navigator.userAgent)) {
+        document.getElementById("installBanner").classList.remove("hidden");
+      }
+    }
+
+    document.body.addEventListener("click", function(ev){
+      var el = ev.target.closest ? ev.target.closest("[data-act]") : null;
+      if (!el) return;
+      var act = el.getAttribute("data-act");
+      try {
+        if (act === "tab")                setTab(el.getAttribute("data-tab"));
+        else if (act === "vert")          setVert(el.getAttribute("data-v"));
+        else if (act === "install")       installHint();
+        else if (act === "setup")         showSetup();
+        else if (act === "print")         window.print();
+        else if (act === "export")        exportAll();
+        else if (act === "dismissBanner") dismissBanner();
+        else if (act === "addCustomTask") addCustomTask();
+        else if (act === "addRep")        addRep(el.getAttribute("data-vert"));
+        else if (act === "removeRep")     removeRep(el.getAttribute("data-vert"), parseInt(el.getAttribute("data-i"),10));
+        else if (act === "cycleSlot")     cycleSlot(el.getAttribute("data-vert"), parseInt(el.getAttribute("data-i"),10), el.getAttribute("data-s"));
+        else if (act === "dlNotes")       downloadNotes();
+        else if (act === "emailNotes")    emailNotes();
+        else if (act === "resetDay")      resetDay();
+        else if (act === "reload")        { ev.preventDefault(); window.location.reload(); }
+      } catch(e) { showErr(e); }
+    }, false);
+    document.body.addEventListener("change", function(ev){
+      var el = ev.target;
+      if (!el || !el.getAttribute) return;
+      var act = el.getAttribute("data-act");
+      try {
+        if (act === "toggleTask") toggleTask(el.getAttribute("data-id"), !!el.checked);
+        else if (act === "rnTick") { if (el.parentElement) el.parentElement.classList.toggle("done", !!el.checked); }
+      } catch(e) { showErr(e); }
+    }, false);
+    document.body.addEventListener("input", function(ev){
+      var el = ev.target;
+      if (!el || !el.getAttribute) return;
+      if (el.getAttribute("data-act") === "kpi") {
+        try { setKpi(el.getAttribute("data-vert"), el.getAttribute("data-k"), el.value); } catch(e){ showErr(e); }
+      }
+    }, false);
+
+    load();
+    applyProfile();
+    applyVert();
+    setTab(state.tab || "start");
+    renderChecklist();
+    renderRhythm();
+    renderWeekly();
+    renderCadence();
+    renderKpis();
+    renderReps();
+    renderLinks();
+    renderBC();
+    bindNotes();
+    maybeShowBanner();
+    tick();
+    setInterval(tick, 30 * 1000);
+    document.addEventListener("visibilitychange", function(){ if (!document.hidden) tick(); });
+
+    var p; try { p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}"); } catch(e){}
+    if (!p || !p.name) {
+      setTimeout(showSetup, 400);
+    }
+
+    showStatus(true, "ready");
+    setTimeout(function(){
+      var el = document.getElementById("jsStatus");
+      if (el && el.classList.contains("ok")) {
+        el.style.transition = "opacity .4s ease";
+        el.style.opacity = "0";
+        setTimeout(function(){ if (el && el.parentNode) el.parentNode.removeChild(el); }, 500);
+      }
+    }, 2500);
+  }
+})();
+</script>
+</body>
+</html>
