@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salesforce Training Hub</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1a2333;--muted:#5b6575;--brand:#0b5d3b;--brand2:#0e7a4e;--accent:#e8f3ee;--rep:#1d6fd1;--mgr:#b3541e;--both:#5a3fa0;--line:#e3e6ea;--warn:#fff7e6;--warnline:#e8c268}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:30px 20px 24px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 6px}
+  header h1{font-size:24px}
+  header p{margin-top:6px;opacity:.92;max-width:720px;font-size:14px}
+  header a.folder{display:inline-block;margin-top:10px;background:rgba(255,255,255,.16);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:16px}
+  nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  nav button{border:0;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.18);color:#fff}
+  nav button.active{background:#fff;color:var(--brand)}
+  .controls{max-width:1000px;margin:16px auto 4px;padding:0 6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .controls input{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fff}
+  main{max-width:1000px;margin:0 auto;padding:6px 6px 60px}
+  h2.cat{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:24px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+  .card h3{font-size:15px;line-height:1.35}
+  .card h3 a{color:var(--ink);text-decoration:none}
+  .card h3 a:hover{color:var(--brand);text-decoration:underline}
+  .card p{font-size:13.5px;color:var(--muted);flex:1}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;color:#fff}
+  .tag.rep{background:var(--rep)}.tag.mgr{background:var(--mgr)}.tag.both{background:var(--both)}
+  .tag.type{background:#eef0f3;color:var(--muted);font-weight:600}
+  .open{font-size:13px;font-weight:600;color:var(--brand);text-decoration:none}
+  .open:hover{text-decoration:underline}
+  .section-note{background:var(--warn);border:1px solid var(--warnline);border-radius:10px;padding:14px 16px;font-size:14px;margin:10px 0}
+  .listy{margin:8px 0 0 18px;font-size:13.5px}.listy li{margin-bottom:5px}
+  .empty{color:var(--muted);font-size:14px;padding:20px;text-align:center}
+  footer{max-width:1000px;margin:0 auto;padding:16px 6px 40px;font-size:12.5px;color:#98a0ac}
+  .count{font-size:13px;color:var(--muted);margin-left:auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🗂️ Salesforce Training Hub</h1>
+    <p>Every Salesforce training document in one place. Pick your track, tap a card — it opens in Google Drive on any device.</p>
+    <a class="folder" href="https://drive.google.com/drive/folders/1OieyO7NDbZhVTEr3lqoUH28jLAIu7gT6" target="_blank" rel="noopener">📁 Open the full Drive folder</a>
+    <nav id="trackNav">
+      <button data-track="all" class="active">All</button>
+      <button data-track="rep">🧑‍💼 Reps</button>
+      <button data-track="mgr">📋 Managers</button>
+      <button data-track="gaps">⚠️ Gaps</button>
+    </nav>
+  </div>
+</header>
+
+<div class="controls">
+  <input id="q" type="search" placeholder="Search… (quote, DocuSign, dispatch, Okta)">
+  <span class="count" id="count"></span>
+</div>
+
+<main>
+  <div id="cards"></div>
+  <section id="gapsSec" style="display:none">
+    <h2 class="cat">⚠️ Known conflicts</h2>
+    <div class="section-note">
+      <b>Completion %:</b> 86% (standard) / 88% (Lowes) = contract-ready (generate DocuSign). 100% = result-ready. Both are correct — different checkpoints.<br><br>
+      <b>Dispatch home base:</b> Field Guide says <i>Field Service → Dispatch Console</i>; the newer Trainer Script says <i>Classic Dispatch Console</i> from Sales Home Console. Verify which matches the current org.
+    </div>
+    <h2 class="cat">📝 Training that doesn't exist yet</h2>
+    <div class="section-note">
+      <ul class="listy">
+        <li><b>Resulting a Sale 1.B (Credit Card) & 1.C (Financing)</b> — referenced by 1.A, never written</li>
+        <li><b>Quote Building Walkthrough</b> — only the Checklist exists</li>
+        <li><b>Rep getting-started guide</b> — login, Okta, navigation basics</li>
+        <li><b>Reporting & Dashboards module</b> — nothing dedicated</li>
+        <li><b>Scheduling the Install</b> — no standalone guide</li>
+      </ul>
+    </div>
+  </section>
+</main>
+<footer>Updated July 8, 2026 · Files live in the shared Google Drive folder — links require Drive access.</footer>
+
+<script>
+const items=[
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"1 · Warren SF Walkthrough — full 22-step rep process",url:"https://drive.google.com/file/d/1YABo0JK_fE0CKP95wfHaGz56vCfnTNB_/view",desc:"Start here: understand the terms, sell first, then quote → bundles → pricing → tax → sync → payments → completion → DocuSign → resulting → install.",role:"rep",type:"PDF"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"2 · Full SF Sequence Playbook",url:"https://drive.google.com/file/d/1MR2_CQzf6Ex8q6FVlbE2bTBDLtCy6jEN/view",desc:"The definitive sequence with Watch-Outs: the pricing trap (Incentive 1 only), Calculate Tax on every job, purple-before-blue signing.",role:"both",type:"Word"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"3 · Quote Building Checklist v1.3",url:"https://drive.google.com/file/d/1J82njpiVtTuQXx9MC13Mm-Nb1QWedfnh/view",desc:"Quick-reference checklist for building and syncing a quote.",role:"both",type:"PDF"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"4 · Versatile Account Setup Walkthrough v1.0",url:"https://drive.google.com/file/d/1FkvOPxYpjSwNW0IrxDAJio7MD1Umk05A/view",desc:"Step-by-step setup of a Versatile financing account.",role:"rep",type:"PDF"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"5 · Resulting a Sale 1.A (Check) — Walkthrough v1.0",url:"https://drive.google.com/file/d/1tnKWtxJAeQQowUKg29xOByvqJ3qRfyYK/view",desc:"13 steps, field by field: payment creation, edit for DocuSign, Sales Completion to 100%.",role:"rep",type:"PDF"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"6 · Resulting a Sale 1.A (Check) — Checklist",url:"https://drive.google.com/file/d/1CwfUGxOZ3DJkXgi5o_G2G3ngN2zqIVef/view",desc:"One-page companion checklist — print it and keep it in the truck.",role:"rep",type:"PDF"},
+ {cat:"🧑‍💼 Rep Track — Opportunity → Sale (work these in order)",title:"7 · 🎬 VIDEO: Opportunity → Sale on iPad (DJ Menzel)",url:"https://drive.google.com/file/d/1793RLrj3SRCjuLg5yFyrY9csWOYGNEcB/view",desc:"Full screen-recording of the flow on iPad, June 2026. Streams right in Drive.",role:"rep",type:"Video"},
+ {cat:"📋 Manager Track — Dispatch & Daily Management",title:"Dispatch Console Field Guide",url:"https://docs.google.com/document/d/1lJFtnJOnNsNN0mDYhYJn5oC5XGcqnDjiJiqvB8PVAVY/edit",desc:"Your reference: One Big Idea, Salesforce vocabulary, reading the board, daily jobs, managing reps, finding any job, golden rules.",role:"mgr",type:"Google Doc"},
+ {cat:"📋 Manager Track — Dispatch & Daily Management",title:"Management Navigator — Live Trainer Script",url:"https://docs.google.com/document/d/1ouIYek5_Jlsax9uU0lg49r4Qgr70w0JM0riwI1Id2JI/edit",desc:"8-module SAY/DO script for training managers on the dispatch board over Zoom: Gantt setup, color codes, absences, capping, routing, accountability.",role:"mgr",type:"Google Doc"},
+ {cat:"📋 Manager Track — Dispatch & Daily Management",title:"Daily Management — interactive practice module",url:"https://drive.google.com/file/d/1FY7_y6_yrmsGaxnA9zS6s29q38VSuykd/view",desc:"\"Learn the Board, Keep It for Good\" — download and open in a browser for hands-on practice.",role:"mgr",type:"HTML"},
+ {cat:"📋 Manager Track — Dispatch & Daily Management",title:"Daily Management — printable version",url:"https://drive.google.com/file/d/1NFjmAhdOuaISKF5nMhAXcJN4Vv6rruoi/view",desc:"Static PDF export of the practice module for printing.",role:"mgr",type:"PDF"},
+ {cat:"🔧 Admin & Troubleshooting",title:"Missing Okta Provision — IT ticket walkthrough",url:"https://drive.google.com/file/d/1Dj8MuuOpCI_em2uKRxiiTIbUQ6fzMgKX/view",desc:"New rep never got the Okta welcome email? 7 steps to file the ticket that unblocks their Salesforce access.",role:"mgr",type:"PDF"},
+ {cat:"🔧 Admin & Troubleshooting",title:"Lowes Data Entry SOP v3",url:"https://drive.google.com/file/d/16suw-M8DLxsuCXeW7mpQPee9pQTtUsJg/view",desc:"Sending documents to customers on Lowes jobs via MIC and Sales Mobile.",role:"both",type:"Word"}
+];
+const cardsEl=document.getElementById('cards'),q=document.getElementById('q'),countEl=document.getElementById('count'),gapsSec=document.getElementById('gapsSec');
+let track='all';
+const roleTag=r=>r==='rep'?'<span class="tag rep">REP</span>':r==='mgr'?'<span class="tag mgr">MANAGER</span>':'<span class="tag both">BOTH</span>';
+function render(){
+  const term=q.value.trim().toLowerCase();
+  const list=items.filter(it=>{
+    if(track==='rep'&&!(it.role==='rep'||it.role==='both'))return false;
+    if(track==='mgr'&&!(it.role==='mgr'||it.role==='both'))return false;
+    if(term&&!(it.title+' '+it.desc+' '+it.cat).toLowerCase().includes(term))return false;
+    return true;
+  });
+  let html='',lastCat=null;
+  list.forEach(it=>{
+    if(it.cat!==lastCat){if(lastCat!==null)html+='</div>';html+=`<h2 class="cat">${it.cat}</h2><div class="grid">`;lastCat=it.cat;}
+    html+=`<div class="card"><div class="meta">${roleTag(it.role)}<span class="tag type">${it.type}</span></div><h3><a href="${it.url}" target="_blank" rel="noopener">${it.title}</a></h3><p>${it.desc}</p><div class="meta"><a class="open" href="${it.url}" target="_blank" rel="noopener">Open ↗</a></div></div>`;
+  });
+  if(lastCat!==null)html+='</div>';
+  cardsEl.innerHTML=list.length?html:'<div class="empty">No matches — clear the search.</div>';
+  countEl.textContent=`${list.length} item${list.length===1?'':'s'}`;
+  gapsSec.style.display=track==='gaps'?'block':'none';
+  cardsEl.style.display=track==='gaps'?'none':'block';
+}
+document.getElementById('trackNav').addEventListener('click',e=>{
+  if(e.target.tagName!=='BUTTON')return;
+  document.querySelectorAll('#trackNav button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');track=e.target.dataset.track;render();
+});
+q.addEventListener('input',render);
+render();
+</script>
+</body>
+</html>
